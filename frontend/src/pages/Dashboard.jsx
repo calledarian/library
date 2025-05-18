@@ -26,7 +26,7 @@ const Dashboard = () => {
             const decodedToken = jwtDecode(accessToken);
             if (decodedToken.exp * 1000 < Date.now()) {
                 localStorage.removeItem('token');
-                navigate('/');
+                navigate('/login');
             }
         } catch (error) {
             console.error('Error decoding token:', error);
