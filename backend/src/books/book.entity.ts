@@ -1,10 +1,8 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
-
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class Book {
-
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
@@ -13,4 +11,6 @@ export class Book {
     @Column()
     author: string;
 
+    @CreateDateColumn({ type: 'date' })
+    createdAt: string;
 }

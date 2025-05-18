@@ -1,31 +1,57 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode'; // named import, NOT default
 import './Dashboard.css';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+    const apiUrl = process.env.REACT_APP_API_URL;
+
     const [searchId, setSearchId] = useState('');
     const [books, setBooks] = useState([]);
     const [newBook, setNewBook] = useState({ id: '', title: '', author: '' });
     const [editingBook, setEditingBook] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const navigate = useNavigate();
 
+    // Check token and expiration
     useEffect(() => {
-        fetchBooks();
-    }, []);
+        const accessToken = localStorage.getItem('token');
 
-    const fetchBooks = async () => {
-        setIsLoading(true);
-        try {
-            const response = await axios.get('http://localhost:3000/books');
-            setBooks(response.data);
-        } catch (error) {
-            setMessage('Failed to load books');
-            console.error('Error fetching books:', error);
-        } finally {
-            setIsLoading(false);
+        if (!accessToken) {
+            navigate('/');
+            return;
         }
-    };
+
+        try {
+            const decodedToken = jwtDecode(accessToken);
+            if (decodedToken.exp * 1000 < Date.now()) {
+                localStorage.removeItem('token');
+                navigate('/');
+            }
+        } catch (error) {
+            console.error('Error decoding token:', error);
+        }
+    }, [navigate]);
+
+    // Fetch books on mount
+    useEffect(() => {
+        const fetchBooks = async () => {
+            setIsLoading(true);
+            try {
+                const response = await axios.get(`${apiUrl}/books`);
+                setBooks(response.data);
+            } catch (error) {
+                setMessage('Failed to load books');
+                console.error('Error fetching books:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchBooks();
+    }, [apiUrl]);
 
     const showMessage = (text) => {
         setMessage(text);
@@ -51,7 +77,7 @@ const Dashboard = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const response = await axios.post('http://localhost:3000/books', newBook);
+            const response = await axios.post(`${apiUrl}/books`, newBook);
             setBooks([...books, response.data]);
             setNewBook({ id: '', title: '', author: '' });
             showMessage('Book added successfully');
@@ -75,8 +101,8 @@ const Dashboard = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const response = await axios.put(`http://localhost:3000/books/${editingBook.id}`, editingBook);
-            setBooks(books.map(book => book.id === editingBook.id ? response.data : book));
+            const response = await axios.put(`${apiUrl}/books/${editingBook.id}`, editingBook);
+            setBooks(books.map(book => (book.id === editingBook.id ? response.data : book)));
             setEditingBook(null);
             showMessage('Book updated successfully');
         } catch (error) {
@@ -90,7 +116,7 @@ const Dashboard = () => {
     const deleteBook = async (bookId) => {
         setIsLoading(true);
         try {
-            await axios.delete(`http://localhost:3000/books/${bookId}`);
+            await axios.delete(`${apiUrl}/books/${bookId}`);
             setBooks(books.filter(book => book.id !== bookId));
             showMessage('Book deleted');
         } catch (error) {
@@ -104,7 +130,7 @@ const Dashboard = () => {
     const getBookById = async (bookId) => {
         setIsLoading(true);
         try {
-            const response = await axios.get(`http://localhost:3000/books/${bookId}`);
+            const response = await axios.get(`${apiUrl}/books/${bookId}`);
             setBooks([response.data]);
             setSearchId('');
         } catch (error) {
@@ -115,12 +141,23 @@ const Dashboard = () => {
         }
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/');
+    };
+
     return (
         <div className="app">
             {message && <div className="message">{message}</div>}
 
             <div className="card">
-                <h2>Add Book</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2>Add Book</h2>
+                    <button style={{ backgroundColor: 'orange' }} onClick={handleLogout}>
+                        Logout
+                    </button>
+                </div>
+
                 <form onSubmit={createBook}>
                     <div className="form-row">
                         <input
@@ -150,7 +187,9 @@ const Dashboard = () => {
                             required
                         />
                     </div>
-                    <button type="submit" disabled={isLoading}>Add</button>
+                    <button type="submit" disabled={isLoading}>
+                        Add
+                    </button>
                 </form>
             </div>
 
@@ -163,14 +202,23 @@ const Dashboard = () => {
                         value={searchId}
                         onChange={(e) => setSearchId(e.target.value)}
                     />
-                    <button type="submit" disabled={isLoading}>Search</button>
+                    <button type="submit" disabled={isLoading}>
+                        Search
+                    </button>
                 </form>
             </div>
 
             <div className="card">
                 <div className="list-header">
                     <h2>Books</h2>
-                    <button onClick={fetchBooks} className="refresh" disabled={isLoading}>
+                    <button onClick={() => {
+                        // you can reuse fetchBooks logic here by repeating it inline or extract if needed
+                        setIsLoading(true);
+                        axios.get(`${apiUrl}/books`)
+                            .then((response) => setBooks(response.data))
+                            .catch(() => setMessage('Failed to load books'))
+                            .finally(() => setIsLoading(false));
+                    }} className="refresh" disabled={isLoading}>
                         Refresh
                     </button>
                 </div>
@@ -181,7 +229,7 @@ const Dashboard = () => {
                     <p className="no-data">No books found</p>
                 ) : (
                     <ul className="book-list">
-                        {books.map(book => (
+                        {books.map((book) => (
                             <li key={book.id}>
                                 {editingBook && editingBook.id === book.id ? (
                                     <form onSubmit={updateBook} className="simple-edit-form">
@@ -202,29 +250,27 @@ const Dashboard = () => {
                                             required
                                         />
                                         <div className="button-group">
-                                            <button type="submit" className="save-btn" disabled={isLoading}>Save</button>
-                                            <button type="button" className="cancel-btn" onClick={cancelEditing} disabled={isLoading}>Cancel</button>
+                                            <button type="submit" className="save-btn" disabled={isLoading}>
+                                                Save
+                                            </button>
+                                            <button type="button" className="cancel-btn" onClick={cancelEditing} disabled={isLoading}>
+                                                Cancel
+                                            </button>
                                         </div>
                                     </form>
                                 ) : (
                                     <>
                                         <div className="book-details">
                                             <strong>{book.title}</strong>
-                                            <p>ID: {book.id} | Author: {book.author}</p>
+                                            <p>
+                                                ID: {book.id} | Author: {book.author} | {book.createdAt}
+                                            </p>
                                         </div>
                                         <div className="button-group">
-                                            <button
-                                                onClick={() => startEditing(book)}
-                                                className="edit-btn"
-                                                disabled={isLoading}
-                                            >
+                                            <button onClick={() => startEditing(book)} className="edit-btn" disabled={isLoading}>
                                                 Edit
                                             </button>
-                                            <button
-                                                onClick={() => deleteBook(book.id)}
-                                                className="delete"
-                                                disabled={isLoading}
-                                            >
+                                            <button onClick={() => deleteBook(book.id)} className="delete" disabled={isLoading}>
                                                 ×
                                             </button>
                                         </div>

@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -6,11 +9,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ConfigService } from '@nestjs/config';
 import { Book } from './books/book.entity';
+import { AdminController } from './admin/admin.controller';
+import { AdminService } from './admin/admin.service';
+import { AdminModule } from './admin/admin.module';
+import { LoginController } from './login/login.controller';
+import { LoginService } from './login/login.service';
+import { LoginModule } from './login/login.module';
 import * as  Joi from 'joi';
 
 @Module({
   imports: [
-    // ConfigModule loads .env and makes them available globally
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -34,15 +42,16 @@ import * as  Joi from 'joi';
         username: configService.get<string>('DATABASE_USER'),
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
-        entities: [Book],
+        autoLoadEntities: true,
         synchronize: true, // Set to false in production
       }),
     }),
 
-    // Import your BooksModule here
     BooksModule,
+
+    AdminModule,
+
+    LoginModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule { }
