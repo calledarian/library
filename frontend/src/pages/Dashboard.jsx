@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode'; // named import, NOT default
-import './Dashboard.css';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -158,19 +157,67 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="app">
-            {message && <div className="message">{message}</div>}
+        <div
+            style={{
+                maxWidth: '900px',
+                margin: '20px auto',
+                fontFamily: 'Arial, sans-serif',
+                padding: '10px',
+            }}
+        >
+            {message && (
+                <div
+                    style={{
+                        backgroundColor: '#d4edda',
+                        color: '#155724',
+                        border: '1px solid #c3e6cb',
+                        borderRadius: '5px',
+                        padding: '10px',
+                        marginBottom: '15px',
+                        textAlign: 'center',
+                    }}
+                >
+                    {message}
+                </div>
+            )}
 
-            <div className="card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2>Add Book</h2>
-                    <button style={{ backgroundColor: 'orange' }} onClick={handleLogout}>
+            {/* Add Book Card */}
+            <div
+                style={{
+                    backgroundColor: 'white',
+                    padding: '20px',
+                    marginBottom: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                }}
+            >
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '15px',
+                    }}
+                >
+                    <h2 style={{ margin: 0 }}>Add Book</h2>
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            backgroundColor: 'orange',
+                            border: 'none',
+                            borderRadius: '5px',
+                            padding: '8px 15px',
+                            cursor: 'pointer',
+                            color: 'white',
+                            fontWeight: 'bold',
+                        }}
+                    >
                         Logout
                     </button>
                 </div>
 
                 <form onSubmit={createBook}>
-                    <div className="form-row">
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
                         <input
                             type="number"
                             name="id"
@@ -178,6 +225,12 @@ const Dashboard = () => {
                             onChange={handleInputChange}
                             placeholder="ID"
                             required
+                            style={{
+                                flex: '1',
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: '1px solid #ccc',
+                            }}
                         />
                         <input
                             type="text"
@@ -186,9 +239,15 @@ const Dashboard = () => {
                             onChange={handleInputChange}
                             placeholder="Title"
                             required
+                            style={{
+                                flex: '2',
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: '1px solid #ccc',
+                            }}
                         />
                     </div>
-                    <div className="form-row">
+                    <div style={{ marginBottom: '15px' }}>
                         <input
                             type="text"
                             name="author"
@@ -196,54 +255,135 @@ const Dashboard = () => {
                             onChange={handleInputChange}
                             placeholder="Author"
                             required
+                            style={{
+                                width: '100%',
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: '1px solid #ccc',
+                            }}
                         />
                     </div>
-                    <button type="submit" disabled={isLoading}>
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        style={{
+                            backgroundColor: '#4CAF50',
+                            color: 'white',
+                            padding: '10px 20px',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: isLoading ? 'not-allowed' : 'pointer',
+                            fontWeight: 'bold',
+                        }}
+                    >
                         Add
                     </button>
                 </form>
             </div>
 
-            <div className="card">
-                <h2>Find Book</h2>
-                <form onSubmit={handleSearchSubmit} className="search-form">
+            {/* Find Book Card */}
+            <div
+                style={{
+                    backgroundColor: 'white',
+                    padding: '20px',
+                    marginBottom: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                }}
+            >
+                <h2 style={{ marginBottom: '15px' }}>Find Book</h2>
+                <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px' }}>
                     <input
                         type="number"
                         placeholder="Enter Book ID"
                         value={searchId}
                         onChange={(e) => setSearchId(e.target.value)}
+                        style={{
+                            flex: '1',
+                            padding: '8px',
+                            borderRadius: '4px',
+                            border: '1px solid #ccc',
+                        }}
                     />
-                    <button type="submit" disabled={isLoading}>
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        style={{
+                            backgroundColor: '#2196F3',
+                            color: 'white',
+                            padding: '10px 20px',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: isLoading ? 'not-allowed' : 'pointer',
+                            fontWeight: 'bold',
+                        }}
+                    >
                         Search
                     </button>
                 </form>
             </div>
 
-            <div className="card">
-                <div className="list-header">
-                    <h2>Books</h2>
-                    <button onClick={() => {
-                        // you can reuse fetchBooks logic here by repeating it inline or extract if needed
-                        setIsLoading(true);
-                        axios.get(`${apiUrl}/books`)
-                            .then((response) => setBooks(response.data))
-                            .catch(() => setMessage('Failed to load books'))
-                            .finally(() => setIsLoading(false));
-                    }} className="refresh" disabled={isLoading}>
+            {/* Books List Card */}
+            <div
+                style={{
+                    backgroundColor: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                }}
+            >
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '15px',
+                    }}
+                >
+                    <h2 style={{ margin: 0 }}>Books</h2>
+                    <button
+                        onClick={() => {
+                            setIsLoading(true);
+                            axios
+                                .get(`${apiUrl}/books`)
+                                .then((response) => setBooks(response.data))
+                                .catch(() => setMessage('Failed to load books'))
+                                .finally(() => setIsLoading(false));
+                        }}
+                        disabled={isLoading}
+                        style={{
+                            backgroundColor: '#555',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '5px',
+                            padding: '8px 15px',
+                            cursor: isLoading ? 'not-allowed' : 'pointer',
+                            fontWeight: 'bold',
+                        }}
+                    >
                         Refresh
                     </button>
                 </div>
 
                 {isLoading ? (
-                    <p className="loading">Loading...</p>
+                    <p style={{ fontStyle: 'italic', textAlign: 'center' }}>Loading...</p>
                 ) : books.length === 0 ? (
-                    <p className="no-data">No books found</p>
+                    <p style={{ fontStyle: 'italic', textAlign: 'center' }}>No books found</p>
                 ) : (
-                    <ul className="book-list">
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {books.map((book) => (
-                            <li key={book.id}>
+                            <li
+                                key={book.id}
+                                style={{
+                                    borderBottom: '1px solid #ddd',
+                                    padding: '10px 0',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                }}
+                            >
                                 {editingBook && editingBook.id === book.id ? (
-                                    <form onSubmit={updateBook} className="simple-edit-form">
+                                    <form onSubmit={updateBook} style={{ display: 'flex', gap: '10px', flex: 1 }}>
                                         <input
                                             type="text"
                                             name="title"
@@ -251,6 +391,12 @@ const Dashboard = () => {
                                             onChange={handleEditInputChange}
                                             placeholder="Title"
                                             required
+                                            style={{
+                                                flex: 2,
+                                                padding: '8px',
+                                                borderRadius: '4px',
+                                                border: '1px solid #ccc',
+                                            }}
                                         />
                                         <input
                                             type="text"
@@ -259,29 +405,80 @@ const Dashboard = () => {
                                             onChange={handleEditInputChange}
                                             placeholder="Author"
                                             required
+                                            style={{
+                                                flex: 2,
+                                                padding: '8px',
+                                                borderRadius: '4px',
+                                                border: '1px solid #ccc',
+                                            }}
                                         />
-                                        <div className="button-group">
-                                            <button type="submit" className="save-btn" disabled={isLoading}>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                style={{
+                                                    backgroundColor: '#4CAF50',
+                                                    color: 'white',
+                                                    padding: '6px 12px',
+                                                    border: 'none',
+                                                    borderRadius: '5px',
+                                                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                                                }}
+                                            >
                                                 Save
                                             </button>
-                                            <button type="button" className="cancel-btn" onClick={cancelEditing} disabled={isLoading}>
+                                            <button
+                                                type="button"
+                                                onClick={cancelEditing}
+                                                disabled={isLoading}
+                                                style={{
+                                                    backgroundColor: '#f44336',
+                                                    color: 'white',
+                                                    padding: '6px 12px',
+                                                    border: 'none',
+                                                    borderRadius: '5px',
+                                                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                                                }}
+                                            >
                                                 Cancel
                                             </button>
                                         </div>
                                     </form>
                                 ) : (
                                     <>
-                                        <div className="book-details">
+                                        <div style={{ flex: 1 }}>
                                             <strong>{book.title}</strong>
-                                            <p>
+                                            <p style={{ margin: '5px 0', color: '#555', fontSize: '14px' }}>
                                                 ID: {book.id} | Author: {book.author} | {book.createdAt}
                                             </p>
                                         </div>
-                                        <div className="button-group">
-                                            <button onClick={() => startEditing(book)} className="edit-btn" disabled={isLoading}>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button
+                                                onClick={() => startEditing(book)}
+                                                disabled={isLoading}
+                                                style={{
+                                                    backgroundColor: '#2196F3',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '5px',
+                                                    padding: '6px 12px',
+                                                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                                                }}
+                                            >
                                                 Edit
                                             </button>
-                                            <button onClick={() => deleteBook(book.id)} className="delete" disabled={isLoading}>
+                                            <button
+                                                onClick={() => deleteBook(book.id)}
+                                                disabled={isLoading}
+                                                style={{
+                                                    backgroundColor: '#f44336',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '5px',
+                                                    padding: '6px 12px',
+                                                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                                                }}
+                                            >
                                                 ×
                                             </button>
                                         </div>
@@ -293,6 +490,7 @@ const Dashboard = () => {
                 )}
             </div>
         </div>
+
     );
 };
 
