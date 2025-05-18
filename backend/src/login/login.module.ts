@@ -5,14 +5,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { Admin } from 'src/admin/admin.entity';
 import { LoginService } from './login.service';
 import { LoginController } from './login.controller';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Admin]),
-        JwtModule.register({
-            secret: process.env.JWT_SECRET,
-            signOptions: { expiresIn: '1h' },
-        }),
+        AuthModule
     ],
     controllers: [LoginController],
     providers: [LoginService],

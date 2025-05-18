@@ -15,7 +15,6 @@ const Dashboard = () => {
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
 
-    // Check token and expiration
     useEffect(() => {
         const accessToken = localStorage.getItem('token');
 
@@ -34,6 +33,18 @@ const Dashboard = () => {
             console.error('Error decoding token:', error);
         }
     }, [navigate]);
+
+    const getAuthConfig = () => {
+        const accessToken = localStorage.getItem('token');
+        return {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        };
+    };
+    const config = getAuthConfig();
+
+
 
     // Fetch books on mount
     useEffect(() => {
@@ -77,7 +88,7 @@ const Dashboard = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const response = await axios.post(`${apiUrl}/books`, newBook);
+            const response = await axios.post(`${apiUrl}/books`, newBook, config);
             setBooks([...books, response.data]);
             setNewBook({ id: '', title: '', author: '' });
             showMessage('Book added successfully');
@@ -101,7 +112,7 @@ const Dashboard = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const response = await axios.put(`${apiUrl}/books/${editingBook.id}`, editingBook);
+            const response = await axios.put(`${apiUrl}/books/${editingBook.id}`, editingBook, config);
             setBooks(books.map(book => (book.id === editingBook.id ? response.data : book)));
             setEditingBook(null);
             showMessage('Book updated successfully');
@@ -116,7 +127,7 @@ const Dashboard = () => {
     const deleteBook = async (bookId) => {
         setIsLoading(true);
         try {
-            await axios.delete(`${apiUrl}/books/${bookId}`);
+            await axios.delete(`${apiUrl}/books/${bookId}`, config);
             setBooks(books.filter(book => book.id !== bookId));
             showMessage('Book deleted');
         } catch (error) {

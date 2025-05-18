@@ -2,20 +2,15 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { BooksModule } from './books/books.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ConfigService } from '@nestjs/config';
-import { Book } from './books/book.entity';
-import { AdminController } from './admin/admin.controller';
-import { AdminService } from './admin/admin.service';
 import { AdminModule } from './admin/admin.module';
-import { LoginController } from './login/login.controller';
-import { LoginService } from './login/login.service';
 import { LoginModule } from './login/login.module';
-import * as  Joi from 'joi';
+import * as Joi from 'joi';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -52,6 +47,9 @@ import * as  Joi from 'joi';
     AdminModule,
 
     LoginModule,
+
   ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule { }
