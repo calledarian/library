@@ -1,18 +1,30 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // named import, NOT default
+import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
+import '../styles/Dashboard.css';
+
 
 const Dashboard = () => {
     const apiUrl = process.env.REACT_APP_API_URL;
 
     const [searchId, setSearchId] = useState('');
     const [books, setBooks] = useState([]);
-    const [newBook, setNewBook] = useState({ id: '', title: '', author: '' });
+    const [newBook, setNewBook] = useState({ id: '', title: '', author: '', url: '' });
     const [editingBook, setEditingBook] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
+
+    // Helper to get fresh config with current token
+    const getAuthConfig = () => {
+        const token = localStorage.getItem('token');
+        return {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        };
+    };
 
     useEffect(() => {
         const accessToken = localStorage.getItem('token');
@@ -30,27 +42,17 @@ const Dashboard = () => {
             }
         } catch (error) {
             console.error('Error decoding token:', error);
+            localStorage.removeItem('token');
+            navigate('/login');
         }
     }, [navigate]);
 
-    const getAuthConfig = () => {
-        const accessToken = localStorage.getItem('token');
-        return {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        };
-    };
-    const config = getAuthConfig();
-
-
-
-    // Fetch books on mount
     useEffect(() => {
         const fetchBooks = async () => {
             setIsLoading(true);
+            setMessage('');
             try {
-                const response = await axios.get(`${apiUrl}/books`);
+                const response = await axios.get(`${apiUrl}/books`, getAuthConfig());
                 setBooks(response.data);
             } catch (error) {
                 setMessage('Failed to load books');
@@ -86,10 +88,11 @@ const Dashboard = () => {
     const createBook = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        setMessage('');
         try {
-            const response = await axios.post(`${apiUrl}/books`, newBook, config);
+            const response = await axios.post(`${apiUrl}/books`, newBook, getAuthConfig());
             setBooks([...books, response.data]);
-            setNewBook({ id: '', title: '', author: '' });
+            setNewBook({ id: '', title: '', author: '', url: '' });
             showMessage('Book added successfully');
         } catch (error) {
             showMessage('Failed to add book');
@@ -110,9 +113,14 @@ const Dashboard = () => {
     const updateBook = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        setMessage('');
         try {
-            const response = await axios.put(`${apiUrl}/books/${editingBook.id}`, editingBook, config);
-            setBooks(books.map(book => (book.id === editingBook.id ? response.data : book)));
+            const response = await axios.put(
+                `${apiUrl}/books/${editingBook.id}`,
+                editingBook,
+                getAuthConfig()
+            );
+            setBooks(books.map((book) => (book.id === editingBook.id ? response.data : book)));
             setEditingBook(null);
             showMessage('Book updated successfully');
         } catch (error) {
@@ -125,9 +133,10 @@ const Dashboard = () => {
 
     const deleteBook = async (bookId) => {
         setIsLoading(true);
+        setMessage('');
         try {
-            await axios.delete(`${apiUrl}/books/${bookId}`, config);
-            setBooks(books.filter(book => book.id !== bookId));
+            await axios.delete(`${apiUrl}/books/${bookId}`, getAuthConfig());
+            setBooks(books.filter((book) => book.id !== bookId));
             showMessage('Book deleted');
         } catch (error) {
             showMessage('Failed to delete book');
@@ -139,8 +148,9 @@ const Dashboard = () => {
 
     const getBookById = async (bookId) => {
         setIsLoading(true);
+        setMessage('');
         try {
-            const response = await axios.get(`${apiUrl}/books/${bookId}`);
+            const response = await axios.get(`${apiUrl}/books/${bookId}`, getAuthConfig());
             setBooks([response.data]);
             setSearchId('');
         } catch (error) {
@@ -156,68 +166,22 @@ const Dashboard = () => {
         navigate('/');
     };
 
+    // The JSX remains mostly the same as your original code
+    // (You can add classNames instead of inline styles if you want)
+
     return (
-        <div
-            style={{
-                maxWidth: '900px',
-                margin: '20px auto',
-                fontFamily: 'Arial, sans-serif',
-                padding: '10px',
-            }}
-        >
-            {message && (
-                <div
-                    style={{
-                        backgroundColor: '#d4edda',
-                        color: '#155724',
-                        border: '1px solid #c3e6cb',
-                        borderRadius: '5px',
-                        padding: '10px',
-                        marginBottom: '15px',
-                        textAlign: 'center',
-                    }}
-                >
-                    {message}
-                </div>
-            )}
+        <div className="dashboard-container">
+            {message && <div className="message-box">{message}</div>}
 
             {/* Add Book Card */}
-            <div
-                style={{
-                    backgroundColor: 'white',
-                    padding: '20px',
-                    marginBottom: '20px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                }}
-            >
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '15px',
-                    }}
-                >
-                    <h2 style={{ margin: 0 }}>Add Book</h2>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            backgroundColor: 'orange',
-                            border: 'none',
-                            borderRadius: '5px',
-                            padding: '8px 15px',
-                            cursor: 'pointer',
-                            color: 'white',
-                            fontWeight: 'bold',
-                        }}
-                    >
-                        Logout
-                    </button>
+            <div className="card add-book-card">
+                <div className="card-header">
+                    <h2>Add Book</h2>
+                    <button className="logout-btn" onClick={handleLogout}>Logout</button>
                 </div>
 
                 <form onSubmit={createBook}>
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                    <div className="form-row">
                         <input
                             type="number"
                             name="id"
@@ -225,12 +189,6 @@ const Dashboard = () => {
                             onChange={handleInputChange}
                             placeholder="ID"
                             required
-                            style={{
-                                flex: '1',
-                                padding: '8px',
-                                borderRadius: '4px',
-                                border: '1px solid #ccc',
-                            }}
                         />
                         <input
                             type="text"
@@ -239,15 +197,9 @@ const Dashboard = () => {
                             onChange={handleInputChange}
                             placeholder="Title"
                             required
-                            style={{
-                                flex: '2',
-                                padding: '8px',
-                                borderRadius: '4px',
-                                border: '1px solid #ccc',
-                            }}
                         />
                     </div>
-                    <div style={{ marginBottom: '15px' }}>
+                    <div>
                         <input
                             type="text"
                             name="author"
@@ -255,135 +207,69 @@ const Dashboard = () => {
                             onChange={handleInputChange}
                             placeholder="Author"
                             required
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                borderRadius: '4px',
-                                border: '1px solid #ccc',
-                            }}
                         />
                     </div>
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        style={{
-                            backgroundColor: '#4CAF50',
-                            color: 'white',
-                            padding: '10px 20px',
-                            border: 'none',
-                            borderRadius: '5px',
-                            cursor: isLoading ? 'not-allowed' : 'pointer',
-                            fontWeight: 'bold',
-                        }}
-                    >
-                        Add
-                    </button>
+                    <div>
+                        <input
+                            type="url"
+                            name="url"
+                            value={newBook.url}
+                            onChange={handleInputChange}
+                            placeholder="URL"
+                            required
+                        />
+                    </div>
+                    <button type="submit" disabled={isLoading}>Add</button>
                 </form>
             </div>
 
             {/* Find Book Card */}
-            <div
-                style={{
-                    backgroundColor: 'white',
-                    padding: '20px',
-                    marginBottom: '20px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                }}
-            >
-                <h2 style={{ marginBottom: '15px' }}>Find Book</h2>
-                <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: '10px' }}>
+            <div className="card find-book-card">
+                <h2>Find Book</h2>
+                <form onSubmit={handleSearchSubmit} className="form-row">
                     <input
                         type="number"
                         placeholder="Enter Book ID"
                         value={searchId}
                         onChange={(e) => setSearchId(e.target.value)}
-                        style={{
-                            flex: '1',
-                            padding: '8px',
-                            borderRadius: '4px',
-                            border: '1px solid #ccc',
-                        }}
                     />
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        style={{
-                            backgroundColor: '#2196F3',
-                            color: 'white',
-                            padding: '10px 20px',
-                            border: 'none',
-                            borderRadius: '5px',
-                            cursor: isLoading ? 'not-allowed' : 'pointer',
-                            fontWeight: 'bold',
-                        }}
-                    >
-                        Search
-                    </button>
+                    <button type="submit" disabled={isLoading}>Search</button>
                 </form>
             </div>
 
             {/* Books List Card */}
-            <div
-                style={{
-                    backgroundColor: 'white',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                }}
-            >
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '15px',
-                    }}
-                >
-                    <h2 style={{ margin: 0 }}>Books</h2>
+            <div className="card books-list-card">
+                <div className="card-header">
+                    <h2>Books</h2>
                     <button
-                        onClick={() => {
+                        onClick={async () => {
                             setIsLoading(true);
-                            axios
-                                .get(`${apiUrl}/books`)
-                                .then((response) => setBooks(response.data))
-                                .catch(() => setMessage('Failed to load books'))
-                                .finally(() => setIsLoading(false));
+                            setMessage('');
+                            try {
+                                const response = await axios.get(`${apiUrl}/books`, getAuthConfig());
+                                setBooks(response.data);
+                            } catch {
+                                setMessage('Failed to load books');
+                            } finally {
+                                setIsLoading(false);
+                            }
                         }}
                         disabled={isLoading}
-                        style={{
-                            backgroundColor: '#555',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '5px',
-                            padding: '8px 15px',
-                            cursor: isLoading ? 'not-allowed' : 'pointer',
-                            fontWeight: 'bold',
-                        }}
                     >
                         Refresh
                     </button>
                 </div>
 
                 {isLoading ? (
-                    <p style={{ fontStyle: 'italic', textAlign: 'center' }}>Loading...</p>
+                    <p className="loading-text">Loading...</p>
                 ) : books.length === 0 ? (
-                    <p style={{ fontStyle: 'italic', textAlign: 'center' }}>No books found</p>
+                    <p className="no-books-text">No books found</p>
                 ) : (
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {books.map((book) => (
-                            <li
-                                key={book.id}
-                                style={{
-                                    borderBottom: '1px solid #ddd',
-                                    padding: '10px 0',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                }}
-                            >
-                                {editingBook && editingBook.id === book.id ? (
-                                    <form onSubmit={updateBook} style={{ display: 'flex', gap: '10px', flex: 1 }}>
+                    <ul className="books-list">
+                        {books.map((book) =>
+                            editingBook && editingBook.id === book.id ? (
+                                <li key={book.id} className="book-item editing">
+                                    <form onSubmit={updateBook} className="edit-form">
                                         <input
                                             type="text"
                                             name="title"
@@ -391,12 +277,6 @@ const Dashboard = () => {
                                             onChange={handleEditInputChange}
                                             placeholder="Title"
                                             required
-                                            style={{
-                                                flex: 2,
-                                                padding: '8px',
-                                                borderRadius: '4px',
-                                                border: '1px solid #ccc',
-                                            }}
                                         />
                                         <input
                                             type="text"
@@ -405,87 +285,31 @@ const Dashboard = () => {
                                             onChange={handleEditInputChange}
                                             placeholder="Author"
                                             required
-                                            style={{
-                                                flex: 2,
-                                                padding: '8px',
-                                                borderRadius: '4px',
-                                                border: '1px solid #ccc',
-                                            }}
                                         />
-                                        <div style={{ display: 'flex', gap: '10px' }}>
-                                            <button
-                                                type="submit"
-                                                disabled={isLoading}
-                                                style={{
-                                                    backgroundColor: '#4CAF50',
-                                                    color: 'white',
-                                                    padding: '6px 12px',
-                                                    border: 'none',
-                                                    borderRadius: '5px',
-                                                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                                                }}
-                                            >
-                                                Save
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={cancelEditing}
-                                                disabled={isLoading}
-                                                style={{
-                                                    backgroundColor: '#f44336',
-                                                    color: 'white',
-                                                    padding: '6px 12px',
-                                                    border: 'none',
-                                                    borderRadius: '5px',
-                                                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                                                }}
-                                            >
-                                                Cancel
-                                            </button>
+                                        <div className="edit-buttons">
+                                            <button type="submit" disabled={isLoading}>Save</button>
+                                            <button type="button" onClick={cancelEditing} disabled={isLoading}>Cancel</button>
                                         </div>
                                     </form>
-                                ) : (
-                                    <>
-                                        <div style={{ flex: 1 }}>
-                                            <strong>{book.title}</strong>
-                                            <p style={{ margin: '5px 0', color: '#555', fontSize: '14px' }}>
-                                                ID: {book.id} | Author: {book.author} | {book.createdAt}
-                                            </p>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '10px' }}>
-                                            <button
-                                                onClick={() => startEditing(book)}
-                                                disabled={isLoading}
-                                                style={{
-                                                    backgroundColor: '#2196F3',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '5px',
-                                                    padding: '6px 12px',
-                                                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                                                }}
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => deleteBook(book.id)}
-                                                disabled={isLoading}
-                                                style={{
-                                                    backgroundColor: '#f44336',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '5px',
-                                                    padding: '6px 12px',
-                                                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                                                }}
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </li>
-                        ))}
+                                </li>
+                            ) : (
+                                <li key={book.id} className="book-item">
+                                    <div className="book-info">
+                                        <strong>{book.title}</strong>
+                                        <p>ID: {book.id} | Author: {book.author} | {new Date(book.createdAt).toLocaleDateString()}</p>
+                                        <p>
+                                            <a href={book.url} target="_blank" rel="noopener noreferrer" className="btn-view-link">
+                                                Read More
+                                            </a>
+                                        </p>
+                                    </div>
+                                    <div className="book-actions">
+                                        <button className="btn-edit" onClick={() => startEditing(book)} disabled={isLoading}>Edit</button>
+                                        <button className="btn-delete" onClick={() => deleteBook(book.id)} disabled={isLoading}>×</button>
+                                    </div>
+                                </li>
+                            )
+                        )}
                     </ul>
                 )}
             </div>

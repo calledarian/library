@@ -11,6 +11,9 @@ export class Book {
     @Column()
     author: string;
 
+    @Column()
+    url: string;
+
     @CreateDateColumn({ type: 'date' })
     createdAt: string;
 }
